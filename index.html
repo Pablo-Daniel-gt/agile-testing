@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demostración Agile Testing - Carrito de Compras</title>
+    <style>
+        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: #f4f7f6; margin: 0; padding: 20px; color: #333; }
+        .container { max-width: 1000px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        @media (max-width: 768px) { .container { grid-template-columns: 1fr; } }
+        
+        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h1, h2, h3 { color: #2c3e50; margin-top: 0; }
+        
+        /* Tienda */
+        .product-list { display: flex; flex-direction: column; gap: 10px; }
+        .product-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border: 1fr solid #eee; background: #fafafa; border-radius: 5px; }
+        button { background-color: #27ae60; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        button:hover { background-color: #219150; }
+        button.btn-danger { background-color: #e74c3c; }
+        button.btn-danger:hover { background-color: #c0392b; }
+        
+        /* Carrito */
+        table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
+        th, td { text-align: left; padding: 8px; border-bottom: 1px solid #ddd; }
+        .qty-input { width: 50px; padding: 4px; text-align: center; }
+        
+        .coupon-section { display: flex; gap: 10px; margin-bottom: 15px; }
+        .coupon-section input { flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+        
+        .summary-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 1.05em; }
+        .summary-row.total { font-size: 1.3em; font-weight: bold; border-top: 2px solid #333; margin-top: 10px; padding-top: 10px; color: #2c3e50; }
+        
+        .rule-badge { background: #e8f4f8; border-left: 4px solid #3498db; padding: 10px; margin-bottom: 15px; font-size: 0.9em; }
+        
+        /* Consola de Pruebas */
+        .test-panel { grid-column: 1 / -1; background: #1e1e1e; color: #d4d4d4; padding: 20px; border-radius: 8px; font-family: monospace; }
+        .test-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .test-btn { background-color: #8e44ad; color: white; padding: 10px 18px; border-radius: 4px; cursor: pointer; font-size: 1em; }
+        .test-btn:hover { background-color: #71368a; }
+        .test-log { max-height: 250px; overflow-y: auto; background: #111; padding: 10px; border-radius: 4px; }
+        .test-pass { color: #2ecc71; margin: 4px 0; }
+        .test-fail { color: #e74c3c; margin: 4px 0; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div style="text-align: center; margin-bottom: 20px;">
+        <h1>🛒 Carrito de Compras</h1>
+        <p>Módulo con Reglas de Negocio Automatizadas</p>
+    </div>
+
+    <div class="container">
+        <!-- Panel 1: Catálogo de Productos -->
+        <div class="card">
+            <h2>📦 Catálogo de Productos</h2>
+            <div class="product-list">
+                <div class="product-item">
+                    <div>
+                        <strong>Mouse Inalámbrico</strong><br>
+                        <small style="color: #666;">$15.00 | Stock: 5</small>
+                    </div>
+                    <button onclick="agregarAlCarrito(1, 'Mouse Inalámbrico', 15.00, 5)">+ Agregar</button>
+                </div>
+                <div class="product-item">
+                    <div>
+                        <strong>Teclado Mecánico</strong><br>
+                        <small style="color: #666;">$40.00 | Stock: 3</small>
+                    </div>
+                    <button onclick="agregarAlCarrito(2, 'Teclado Mecánico', 40.00, 3)">+ Agregar</button>
+                </div>
+                <div class="product-item">
+                    <div>
+                        <strong>Audífonos Gamer</strong><br>
+                        <small style="color: #666;">$60.00 | Stock: 2</small>
+                    </div>
+                    <button onclick="agregarAlCarrito(3, 'Audífonos Gamer', 60.00, 2)">+ Agregar</button>
+                </div>
+            </div>
+
+            <div class="rule-badge" style="margin-top: 20px;">
+                <strong>💡 Reglas de Negocio Actuales:</strong>
+                <ul style="margin: 5px 0 0 20px; padding: 0;">
+                    <li>Envío Gratis en compras <strong>&ge; $50.00</strong> (si no, envío = $5.00).</li>
+                    <li>Cupones válidos: <code>DESCUENTO10</code> (10%), <code>DESCUENTO20</code> (20%), <code>SUPER50</code> (50%).</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Panel 2: Carrito y Resumen -->
+        <div class="card">
+            <h2>🛒 Tu Carrito</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Producto</th>
+                        <th>Precio</th>
+                        <th>Cant.</th>
+                        <th>Acción</th>
+                    </tr>
+                </thead>
+                <tbody id="cart-items">
+                    <tr><td colspan="4" style="text-align:center; color:#888;">El carrito está vacío</td></tr>
+                </tbody>
+            </table>
+
+            <div class="coupon-section">
+                <input type="text" id="coupon-code" placeholder="Código de cupón (ej: DESCUENTO10)">
+                <button onclick="aplicarCupon()">Aplicar</button>
+            </div>
+
+            <div id="summary">
+                <div class="summary-row"><span>Subtotal:</span> <span id="lbl-subtotal">$0.00</span></div>
+                <div class="summary-row"><span>Descuento:</span> <span id="lbl-descuento">-$0.00</span></div>
+                <div class="summary-row"><span>Envío:</span> <span id="lbl-envio">$0.00</span></div>
+                <div class="summary-row total"><span>Total:</span> <span id="lbl-total">$0.00</span></div>
+            </div>
+        </div>
+
+        <!-- Panel 3: Consola de Pruebas Unitarias Integrada (Agile Testing) -->
+        <div class="test-panel">
+            <div class="test-header">
+                <div>
+                    <h3 style="color: #fff; margin:0;">Pruebas Unitarias Automatizadas</h3>
+                    <small style="color: #aaa;">Ejecución de pruebas en vivo</small>
+                </div>
+                <button class="test-btn" onclick="ejecutarPruebas()">Ejecutar Pruebas</button>
+            </div>
+            <div id="test-results" class="test-log">
+                <div style="color: #777;">Presiona "Ejecutar Pruebas" para validar la lógica del negocio...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cargar Script de Lógica -->
+    <script src="cart.js"></script>
+
+    <!-- Script de Interfaz de Usuario y Pruebas Unitarias Integradas -->
+    <script>
+        let carrito = [];
+        let cuponAplicado = '';
+
+        function agregarAlCarrito(id, nombre, precio, stockMax) {
+            const itemExistente = carrito.find(item => item.id === id);
+            if (itemExistente) {
+                if (itemExistente.cantidad < stockMax) {
+                    itemExistente.cantidad++;
+                } else {
+                    alert(`¡Alcanzaste el límite de stock disponible (${stockMax})!`);
+                }
+            } else {
+                carrito.push({ id, nombre, precio, cantidad: 1, stockMax });
+            }
+            actualizarUI();
+        }
+
+        function cambiarCantidad(id, nuevaCantidad) {
+            const item = carrito.find(item => item.id === id);
+            if (item) {
+                const cant = parseInt(nuevaCantidad) || 1;
+                item.cantidad = Math.min(Math.max(1, cant), item.stockMax);
+            }
+            actualizarUI();
+        }
+
+        function eliminarItem(id) {
+            carrito = carrito.filter(item => item.id !== id);
+            actualizarUI();
+        }
+
+        function aplicarCupon() {
+            cuponAplicado = document.getElementById('coupon-code').value;
+            actualizarUI();
+        }
+
+        function actualizarUI() {
+            const tbody = document.getElementById('cart-items');
+            tbody.innerHTML = '';
+
+            if (carrito.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#888;">El carrito está vacío</td></tr>';
+            } else {
+                carrito.forEach(item => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${item.nombre}</td>
+                        <td>$${item.precio.toFixed(2)}</td>
+                        <td>
+                            <input type="number" class="qty-input" value="${item.cantidad}" min="1" max="${item.stockMax}" onchange="cambiarCantidad(${item.id}, this.value)">
+                        </td>
+                        <td>
+                            <button class="btn-danger" onclick="eliminarItem(${item.id})">X</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+
+            // Calcular totales usando cart.js
+            const resumen = calcularTotalCompra(carrito, cuponAplicado);
+            document.getElementById('lbl-subtotal').innerText = `$${resumen.subtotal.toFixed(2)}`;
+            document.getElementById('lbl-descuento').innerText = `-$${resumen.descuento.toFixed(2)}`;
+            document.getElementById('lbl-envio').innerText = resumen.envio === 0 && resumen.subtotal > 0 ? '¡GRATIS!' : `$${resumen.envio.toFixed(2)}`;
+            document.getElementById('lbl-total').innerText = `$${resumen.total.toFixed(2)}`;
+        }
+
+        // ==========================================
+        // SUITE DE PRUEBAS UNITARIAS AUTOMATIZADAS (Q1 / Q2)
+        // ==========================================
+        function ejecutarPruebas() {
+            const logContainer = document.getElementById('test-results');
+            logContainer.innerHTML = '';
+            let pasadas = 0;
+            let falladas = 0;
+
+            function assert(condicion, nombrePrueba, detalleError = '') {
+                const div = document.createElement('div');
+                if (condicion) {
+                    div.className = 'test-pass';
+                    div.innerText = `✔ [EXITO] ${nombrePrueba}`;
+                    pasadas++;
+                } else {
+                    div.className = 'test-fail';
+                    div.innerText = `✖ [FALLO] ${nombrePrueba} -> ${detalleError}`;
+                    falladas++;
+                }
+                logContainer.appendChild(div);
+            }
+
+            logContainer.innerHTML += `<div style="color:#aaa; border-bottom: 1px solid #333; padding-bottom:5px; margin-bottom:10px;">Iniciando pruebas unitarias de regresión...</div>`;
+
+            // Prueba 1: Carrito vacío
+            const res1 = calcularTotalCompra([]);
+            assert(res1.subtotal === 0 && res1.total === 0, 'Prueba 1: Carrito vacío debe dar Subtotal = $0 y Total = $0');
+
+            // Prueba 2: Subtotal correcto sin envío gratis
+            const itemsP2 = [{ precio: 15.00, cantidad: 2 }]; // $30.00
+            const res2 = calcularTotalCompra(itemsP2);
+            assert(res2.subtotal === 30.00 && res2.envio === 5.00 && res2.total === 35.00, 'Prueba 2: Compra < $50 debe cobrar $5.00 de envío');
+
+            // Prueba 3: Regla Envío Gratis (Umbral >= $50)
+            const itemsP3 = [{ precio: 60.00, cantidad: 1 }]; // $60.00
+            const res3 = calcularTotalCompra(itemsP3);
+            assert(res3.subtotal === 60.00 && res3.envio === 0 && res3.total === 60.00, 'Prueba 3: Compra >= $50 debe tener Envío Gratis ($0)');
+
+            // Prueba 4: Cupón de Descuento 10%
+            const res4 = calcularTotalCompra(itemsP3, 'DESCUENTO10'); // $60 - 10% ($6) = $54 (Envío sigue siendo gratis)
+            assert(res4.descuento === 6.00 && res4.total === 54.00, 'Prueba 4: Cupón DESCUENTO10 aplica 10% correctamente');
+
+            // Prueba 5: Casos Borde (Descuento reduce total por debajo del umbral de envío gratis)
+            const itemsP5 = [{ precio: 55.00, cantidad: 1 }]; // $55
+            // Con 20% descuento: Subtotal con descto = $44. Como $44 < $50, aplica costo de envío de $5 -> Total = $49
+            const res5 = calcularTotalCompra(itemsP5, 'DESCUENTO20');
+            assert(res5.descuento === 11.00 && res5.envio === 5.00 && res5.total === 49.00, 'Prueba 5 (Edge Case): Descuento reduce subtotal < $50 y reacondiciona envío a $5.00');
+
+            // Prueba 6: Cupón Inválido
+            const res6 = calcularTotalCompra(itemsP3, 'CUPON_INVALIDO');
+            assert(res6.descuento === 0, 'Prueba 6: Cupón inválido ignora el descuento');
+
+            logContainer.innerHTML += `<div style="color:#fff; font-weight:bold; border-top: 1px solid #333; margin-top:10px; padding-top:5px;">Resumen: ${pasadas} Pasadas | ${falladas} Falladas</div>`;
+        }
+    </script>
+</body>
+</html>
